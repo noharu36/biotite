@@ -1,20 +1,15 @@
-use crate::choice;
-use super::{Parser, many, some};
-use super::ast::{Block, ListType, ListItem};
+use super::ast::{Block, ListItem, ListType};
 use super::inline::parse_inlines;
-use crate::parser::{newline, parse_line, take_until, id};
-use crate::parser::lex::{string, character, digit};
+use super::{Parser, many, some};
+use crate::choice;
+use crate::parser::lex::{character, digit, string};
+use crate::parser::{id, newline, parse_line, take_until};
 
 // 水平線
 fn parse_horizontal_rule<'a>() -> impl Parser<'a, Block> {
-    let tag = choice![
-        string("---"),
-        string("***"),
-        string("___")
-    ];
+    let tag = choice![string("---"), string("***"), string("___")];
 
-    tag
-        .and(many(character(|c| c == ' ')))
+    tag.and(many(character(|c| c == ' ')))
         .and(newline())
         .map(|_| Block::HorizontalRule)
 }
@@ -23,24 +18,28 @@ fn parse_horizontal_rule<'a>() -> impl Parser<'a, Block> {
 fn parse_heading<'a>() -> impl Parser<'a, Block> {
     let hashes = some(character(|c| c == '#'));
 
-    move |input: &'a str| {
-        match hashes(input) {
-            Some((hashes_vec, content)) => {
-                let level = hashes_vec.len();
-                if level > 6 {
-                    return None;
-                }
+    move |input: &'a str| match hashes(input) {
+        Some((hashes_vec, content)) => {
+            let level = hashes_vec.len();
+            if level > 6 {
+                return None;
+            }
 
-                if let Some(((_blank, next), rest)) = string(" ").and(parse_line()).parse(content)
-                    && let Some((inlines, _)) = parse_inlines().parse(next)
-                {
-                    Some((Block::Heading { level: level as u8, content: inlines }, rest))
-                } else  {
-                    None
-                }
-            },
-            _ => None
+            if let Some(((_blank, next), rest)) = string(" ").and(parse_line()).parse(content)
+                && let Some((inlines, _)) = parse_inlines().parse(next)
+            {
+                Some((
+                    Block::Heading {
+                        level: level as u8,
+                        content: inlines,
+                    },
+                    rest,
+                ))
+            } else {
+                None
+            }
         }
+        _ => None,
     }
 }
 
@@ -48,21 +47,25 @@ fn parse_heading<'a>() -> impl Parser<'a, Block> {
 fn parse_fenced_code_block<'a>() -> impl Parser<'a, Block> {
     let start = string("```");
     let end_marker = "```";
-    let language = many(character(|c| c != '\n'))
-                    .map(|chars| {
-                        if chars.is_empty() {
-                            None
-                        } else {
-                            Some(chars.into_iter().collect())
-                        }
-                    });
+    let language = many(character(|c| c != '\n')).map(|chars| {
+        if chars.is_empty() {
+            None
+        } else {
+            Some(chars.into_iter().collect())
+        }
+    });
 
     start
         .and(language)
         .and(newline())
         .and(take_until(end_marker))
         .and(string("```\n").or(string(end_marker)))
-        .map(|((((_start, lang), _), code), _end)| Block::FencedCodeBlock { language: lang, code: code.to_string() })
+        .map(
+            |((((_start, lang), _), code), _end)| Block::FencedCodeBlock {
+                language: lang,
+                code: code.to_string(),
+            },
+        )
 }
 
 // 引用
@@ -85,8 +88,8 @@ fn parse_blockquote<'a>() -> impl Parser<'a, Block> {
                 } else {
                     None
                 }
-            },
-            _ => None
+            }
+            _ => None,
         }
     }
 }
@@ -98,26 +101,23 @@ fn parse_list_item<'a>(marker_parser: impl Parser<'a, usize>) -> impl Parser<'a,
         .and(parse_checkbox().or(id()))
         .and(parse_inlines())
         .and(newline())
-        .map(|((((indent, _), checked), inlines), _)| ListItem { indent, checked, content: inlines })
+        .map(|((((indent, _), checked), inlines), _)| ListItem {
+            indent,
+            checked,
+            content: inlines,
+        })
 }
 
 fn parse_checkbox<'a>() -> impl Parser<'a, Option<bool>> {
     let checked = string("[x]").and(string(" ")).map(|_| Some(true));
     let unchecked = string("[ ]").and(string(" ")).map(|_| Some(false));
 
-    choice![
-        checked,
-        unchecked
-    ]
+    choice![checked, unchecked]
 }
 
 fn parse_unorderd_list<'a>() -> impl Parser<'a, Block> {
     let indent = many(character(|c| c == ' ' || c == '\t')).map(|chars| chars.len());
-    let marker_char = choice![
-        string("*"),
-        string("-"),
-        string("+")
-    ];
+    let marker_char = choice![string("*"), string("-"), string("+")];
     let marker = indent.and(marker_char).map(|(len, _)| len);
 
     some(parse_list_item(marker))
@@ -150,7 +150,6 @@ pub fn parse_block<'a>() -> impl Parser<'a, Block> {
         parse_blockquote(),
         parse_unorderd_list(),
         parse_orderd_list(),
-
         parse_paragraph()
     ]
 }
@@ -166,14 +165,35 @@ mod tests {
         let input = "# Title One\n";
         let input2 = "### Title **Three**\n";
 
-        assert_eq!(parser(input), Some((Block::Heading { level: 1, content: vec![Inline::Text("Title One".to_string())] }, "")));
-        assert_eq!(parser(input2), Some((Block::Heading { level: 3, content: vec![Inline::Text("Title ".to_string()), Inline::Strong(vec![Inline::Text("Three".to_string())])] }, "")))
+        assert_eq!(
+            parser(input),
+            Some((
+                Block::Heading {
+                    level: 1,
+                    content: vec![Inline::Text("Title One".to_string())]
+                },
+                ""
+            ))
+        );
+        assert_eq!(
+            parser(input2),
+            Some((
+                Block::Heading {
+                    level: 3,
+                    content: vec![
+                        Inline::Text("Title ".to_string()),
+                        Inline::Strong(vec![Inline::Text("Three".to_string())])
+                    ]
+                },
+                ""
+            ))
+        )
     }
 
     #[test]
     fn test_parse_horizontal_rule() {
         let parser = parse_horizontal_rule();
-        
+
         assert_eq!(parser("---\n"), Some((Block::HorizontalRule, "")));
         assert_eq!(parser("***\n"), Some((Block::HorizontalRule, "")));
         assert_eq!(parser("___\n"), Some((Block::HorizontalRule, "")));
@@ -185,8 +205,26 @@ mod tests {
         let input = "```rust\nfn main() {}\n```";
         let input2 = "```\nline 1\nline 2\n```";
 
-        assert_eq!(parser(input), Some((Block::FencedCodeBlock { language: Some("rust".to_string()), code: "fn main() {}\n".to_string() }, "")));
-        assert_eq!(parser(input2), Some((Block::FencedCodeBlock { language: None, code: "line 1\nline 2\n".to_string() }, "")))
+        assert_eq!(
+            parser(input),
+            Some((
+                Block::FencedCodeBlock {
+                    language: Some("rust".to_string()),
+                    code: "fn main() {}\n".to_string()
+                },
+                ""
+            ))
+        );
+        assert_eq!(
+            parser(input2),
+            Some((
+                Block::FencedCodeBlock {
+                    language: None,
+                    code: "line 1\nline 2\n".to_string()
+                },
+                ""
+            ))
+        )
     }
 
     #[test]
@@ -203,7 +241,7 @@ mod tests {
                     Inline::Strong(_) => assert!(true),
                     _ => panic!("Expected Strong inline"),
                 }
-            },
+            }
             _ => panic!("Failed to parse unordered list"),
         }
     }
@@ -218,7 +256,7 @@ mod tests {
                 assert_eq!(rest, "");
                 assert_eq!(items.len(), 2);
                 assert_eq!(items[0].content, vec![Inline::Text("First".to_string())]);
-            },
+            }
             _ => panic!("Failed to parse ordered list"),
         }
     }
@@ -237,11 +275,14 @@ mod tests {
                 assert_eq!(items[0].content[0], Inline::Text("Done task".to_string()));
 
                 assert_eq!(items[1].checked, Some(false));
-                assert_eq!(items[1].content[0], Inline::Text("Pending task".to_string()));
+                assert_eq!(
+                    items[1].content[0],
+                    Inline::Text("Pending task".to_string())
+                );
 
                 assert_eq!(items[2].checked, None);
                 assert_eq!(items[2].content[0], Inline::Text("Normal item".to_string()));
-            },
+            }
             _ => panic!("Failed to parse ordered list"),
         }
     }
@@ -263,7 +304,7 @@ mod tests {
                 } else {
                     panic!("Expected Paragraph inside Blockquote");
                 }
-            },
+            }
             _ => panic!("Failed to parse simple blockquote"),
         }
 
@@ -284,7 +325,7 @@ mod tests {
                 } else {
                     panic!("Expected Paragraph as second block");
                 }
-            },
+            }
             _ => panic!("Failed to parse nested blockquote"),
         }
 
@@ -300,7 +341,7 @@ mod tests {
                 } else {
                     panic!("Expected Blockquote inside Blockquote");
                 }
-            },
+            }
             _ => panic!("Failed to parse double nested blockquote"),
         }
     }

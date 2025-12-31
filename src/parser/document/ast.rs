@@ -4,7 +4,7 @@ use std::{collections::HashMap, path::PathBuf};
 pub struct MdDocument<'a> {
     pub path: &'a PathBuf,
     pub front_matter: Option<HashMap<String, String>>,
-    pub body: Option<Document>
+    pub body: Option<Document>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -44,14 +44,8 @@ pub struct ListItem {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Inline {
     Text(String),
-    Link {
-        text: Vec<Inline>,
-        url: String,
-    },
-    Image {
-        alt: String,
-        url: String,
-    },
+    Link { text: Vec<Inline>, url: String },
+    Image { alt: String, url: String },
     Strong(Vec<Inline>),
     Italic(Vec<Inline>),
     Strikethrough(Vec<Inline>),

@@ -29,13 +29,13 @@ pub fn parse_front_matter(content: &str) -> (Option<HashMap<String, String>>, &s
             }
 
             if let Some((key, value)) = trimed.split_once(":") {
-                 if value.is_empty() {
-                     current_list_key = Some(key.to_string());
-                     data.insert(key.to_string(), String::new());
-                 } else {
-                     data.insert(key.to_string(), value.trim().to_string());
-                     current_list_key = None;
-                 }
+                if value.is_empty() {
+                    current_list_key = Some(key.to_string());
+                    data.insert(key.to_string(), String::new());
+                } else {
+                    data.insert(key.to_string(), value.trim().to_string());
+                    current_list_key = None;
+                }
             }
         }
         return (Some(data), body_str);

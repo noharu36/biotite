@@ -1,6 +1,6 @@
 pub fn wrap_template(title: &str, body_content: &str) -> String {
     format!(
-r#"<!DOCTYPE html>
+        r#"<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">

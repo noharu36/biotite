@@ -2,17 +2,13 @@ use crate::parser::some;
 
 use super::Parser;
 
-pub fn character<'a, F> (p: F) -> impl Parser<'a, char>
-where 
+pub fn character<'a, F>(p: F) -> impl Parser<'a, char>
+where
     F: Fn(char) -> bool + 'a + Clone,
 {
-    move |input: &'a str| {
-        match input.chars().next() {
-            Some(c) if p(c) => {
-                Some((c, &input[c.len_utf8()..]))
-            }
-            _ => None,
-        }
+    move |input: &'a str| match input.chars().next() {
+        Some(c) if p(c) => Some((c, &input[c.len_utf8()..])),
+        _ => None,
     }
 }
 

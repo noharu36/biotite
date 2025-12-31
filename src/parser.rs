@@ -1,6 +1,6 @@
-pub mod parse;
-pub mod lex;
 pub mod document;
+pub mod lex;
+pub mod parse;
 
 use crate::parser::lex::{character, string};
 
@@ -12,8 +12,8 @@ pub trait Parser<'a, T>: Fn(&'a str) -> Option<(T, &'a str)> + Clone {
 }
 
 impl<'a, T, F> Parser<'a, T> for F
-where 
-    F: Fn(&'a str) -> Option<(T, &'a str)> + Clone
+where
+    F: Fn(&'a str) -> Option<(T, &'a str)> + Clone,
 {
     fn map<U>(self, f: impl Fn(T) -> U + Clone) -> impl Parser<'a, U> {
         move |input: &'a str| self(input).map(|(t, rest)| (f(t), rest))
@@ -37,11 +37,11 @@ where
 pub fn many<'a, T>(parser: impl Parser<'a, T>) -> impl Parser<'a, Vec<T>> {
     move |mut input: &'a str| {
         let mut result = Vec::new();
-         while let Some((t, rest)) = parser(input) {
-             result.push(t);
-             input = rest;
-         }
-         Some((result, input))
+        while let Some((t, rest)) = parser(input) {
+            result.push(t);
+            input = rest;
+        }
+        Some((result, input))
     }
 }
 
@@ -61,19 +61,15 @@ pub fn some<'a, T>(parser: impl Parser<'a, T>) -> impl Parser<'a, Vec<T>> {
 
 pub fn id<'a, T>() -> impl Parser<'a, T>
 where
-    T: Default + 'a
+    T: Default + 'a,
 {
-    move |input: &'a str| {
-        Some((T::default(), input))
-    }
+    move |input: &'a str| Some((T::default(), input))
 }
 
 pub fn take_until<'a>(target: &'a str) -> impl Parser<'a, &'a str> {
-    move |input: &'a str| {
-        match input.find(target) {
-            Some(index) => Some((&input[..index], &input[index..])),
-            _ => None
-        }
+    move |input: &'a str| match input.find(target) {
+        Some(index) => Some((&input[..index], &input[index..])),
+        _ => None,
     }
 }
 
@@ -82,11 +78,9 @@ pub fn newline<'a>() -> impl Parser<'a, &'a str> {
 }
 
 pub fn parse_line<'a>() -> impl Parser<'a, &'a str> {
-    move | input: &'a str| {
-        match input.find('\n') {
-            Some(index) => Some((&input[..index], &input[index + 1..])),
-            _ => Some((input, ""))
-        }
+    move |input: &'a str| match input.find('\n') {
+        Some(index) => Some((&input[..index], &input[index + 1..])),
+        _ => Some((input, "")),
     }
 }
 
@@ -109,8 +103,8 @@ macro_rules! choice {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{Parser, many};
     use crate::parser::lex::{character, string};
+    use crate::parser::{Parser, many};
 
     #[test]
     fn test_map() {
@@ -147,7 +141,7 @@ mod tests {
         }
         let parser = many(triming(character(|c| c == 'a')));
         assert_eq!(parser("a a a"), Some((vec!['a', 'a', 'a'], "")));
-        assert_eq!(parser(""),         Some((vec![], "")));
+        assert_eq!(parser(""), Some((vec![], "")));
         assert_eq!(parser("  a aabc"), Some((vec!['a', 'a', 'a'], "bc")));
     }
 
@@ -160,11 +154,10 @@ mod tests {
             string("three").map(|_| 3)
         ];
 
-        assert_eq!(parser("zero"), Some((0,  "")));
-        assert_eq!(parser("one"),  Some((1,  "")));
-        assert_eq!(parser("two"),  Some((2,  "")));
-        assert_eq!(parser("three"),  Some((3,  "")));
+        assert_eq!(parser("zero"), Some((0, "")));
+        assert_eq!(parser("one"), Some((1, "")));
+        assert_eq!(parser("two"), Some((2, "")));
+        assert_eq!(parser("three"), Some((3, "")));
         assert_eq!(parser("hoge"), None);
-
     }
 }

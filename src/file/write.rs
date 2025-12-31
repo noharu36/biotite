@@ -1,6 +1,6 @@
-use std::path::PathBuf;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 
 pub fn write(output_dir: &PathBuf, file_name: String, html: String) -> Result<(), std::io::Error> {
     let file_path = file_name + ".html";

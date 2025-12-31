@@ -1,12 +1,10 @@
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use std::path::{PathBuf, Path};
 
 fn is_markdown_file(path: impl AsRef<Path>) -> bool {
     path.as_ref()
         .extension()
-        .map_or(false, |ext| {
-            ext == "md" || ext == "markdown"
-        })
+        .map_or(false, |ext| ext == "md" || ext == "markdown")
 }
 
 pub fn scan_dir(dir: &PathBuf) -> Vec<PathBuf> {

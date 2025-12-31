@@ -1,9 +1,12 @@
-use std::fs;
-use std::env;
-use std::path::{Path, PathBuf};
 use crate::parser::document::ast::{Block, Inline, ListType, MdDocument};
+use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-pub fn copy_document_images(doc: &mut MdDocument, image_dir: &PathBuf) -> Result<(), std::io::Error> {
+pub fn copy_document_images(
+    doc: &mut MdDocument,
+    image_dir: &PathBuf,
+) -> Result<(), std::io::Error> {
     let base_dir = doc.path.parent().unwrap_or(Path::new("."));
 
     for block in &mut doc.body.as_mut().unwrap().blocks {
@@ -13,19 +16,23 @@ pub fn copy_document_images(doc: &mut MdDocument, image_dir: &PathBuf) -> Result
     Ok(())
 }
 
-fn process_block_images(block: &mut Block, base_dir: &Path, image_dir: &PathBuf) -> Result<(), std::io::Error> {
+fn process_block_images(
+    block: &mut Block,
+    base_dir: &Path,
+    image_dir: &PathBuf,
+) -> Result<(), std::io::Error> {
     match block {
-        Block::Paragraph(inlines) |
-        Block::Heading { content: inlines, .. } => {
-            process_inlines(inlines, base_dir, image_dir)
-        },
+        Block::Paragraph(inlines)
+        | Block::Heading {
+            content: inlines, ..
+        } => process_inlines(inlines, base_dir, image_dir),
         Block::Blockquote(blocks) => {
             for b in blocks {
                 process_block_images(b, base_dir, image_dir)?;
             }
 
             Ok(())
-        },
+        }
         Block::List(list_type) => {
             let items = match list_type {
                 ListType::Ordered(items) => items,
@@ -36,23 +43,27 @@ fn process_block_images(block: &mut Block, base_dir: &Path, image_dir: &PathBuf)
             }
 
             Ok(())
-        },
-        _ => Ok(())
+        }
+        _ => Ok(()),
     }
 }
 
-fn process_inlines(inlines: &mut Vec<Inline>, base_dir: &Path, image_dir: &PathBuf) -> Result<(), std::io::Error> {
+fn process_inlines(
+    inlines: &mut Vec<Inline>,
+    base_dir: &Path,
+    image_dir: &PathBuf,
+) -> Result<(), std::io::Error> {
     for inline in inlines {
         match inline {
             Inline::Image { url, .. } => {
                 handle_image_copy(url, base_dir, image_dir)?;
-            },
-            Inline::Strong(children) |
-            Inline::Italic(children) |
-            Inline::Strikethrough(children) |
-            Inline::Link { text: children, .. } => {
+            }
+            Inline::Strong(children)
+            | Inline::Italic(children)
+            | Inline::Strikethrough(children)
+            | Inline::Link { text: children, .. } => {
                 process_inlines(children, base_dir, image_dir)?;
-            },
+            }
             _ => {}
         }
     }
@@ -60,9 +71,13 @@ fn process_inlines(inlines: &mut Vec<Inline>, base_dir: &Path, image_dir: &PathB
     Ok(())
 }
 
-fn handle_image_copy(url: &mut String, base_dir: &Path, image_dir: &PathBuf) -> Result<(), std::io::Error> {
+fn handle_image_copy(
+    url: &mut String,
+    base_dir: &Path,
+    image_dir: &PathBuf,
+) -> Result<(), std::io::Error> {
     if url.starts_with("http://") || url.starts_with("https://") {
-        return Ok(())
+        return Ok(());
     }
 
     let source_path = if url.starts_with("/") {
@@ -85,7 +100,10 @@ fn handle_image_copy(url: &mut String, base_dir: &Path, image_dir: &PathBuf) -> 
         }
     } else {
         println!("Warning: Image not found at {:?}", source_path);
-        return Err(std::io::Error::new(std::io::ErrorKind::NotFound, format!("Warning: Image not found at {:?}", source_path)));
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Warning: Image not found at {:?}", source_path),
+        ));
     }
 
     Ok(())

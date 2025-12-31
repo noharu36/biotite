@@ -1,6 +1,6 @@
-use std::{fs, path::PathBuf};
-use super::document::{parse_document, front_matter};
 use super::document::ast::MdDocument;
+use super::document::{front_matter, parse_document};
+use std::{fs, path::PathBuf};
 
 pub fn parse<'a>(path: &'a PathBuf) -> Result<MdDocument<'a>, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(path)?;
@@ -10,14 +10,14 @@ pub fn parse<'a>(path: &'a PathBuf) -> Result<MdDocument<'a>, Box<dyn std::error
         Ok(MdDocument {
             path,
             front_matter,
-            body: Some(doc)
+            body: Some(doc),
         })
     } else {
         println!("Markdown本文の解析に失敗しました at: {:?}", path);
         Ok(MdDocument {
             path,
             front_matter,
-            body: None
+            body: None,
         })
     }
 }

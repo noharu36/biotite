@@ -1,6 +1,6 @@
+pub mod image;
 pub mod scan;
 pub mod write;
-pub mod image;
 
 use std::fs;
 use std::path::PathBuf;
@@ -19,5 +19,3 @@ pub fn clear(output_dir: &PathBuf, image_dir: &PathBuf) -> Result<(), std::io::E
 
     Ok(())
 }
-
-

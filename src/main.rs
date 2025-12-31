@@ -1,14 +1,18 @@
-use biotite::cli::{Cli, Commands};
 use biotite::cli::build::build;
 use biotite::cli::serve::start_server;
+use biotite::cli::{Cli, Commands};
 use clap::Parser;
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error>{
+async fn main() -> Result<(), std::io::Error> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Build { serve, directory, output }) => {
+        Some(Commands::Build {
+            serve,
+            directory,
+            output,
+        }) => {
             build(directory, output)?;
 
             if *serve {
@@ -16,7 +20,7 @@ async fn main() -> Result<(), std::io::Error>{
             }
 
             Ok(())
-        },
-        None => {Ok(())}
+        }
+        None => Ok(()),
     }
 }
