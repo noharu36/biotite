@@ -1,0 +1,58 @@
+/*primitive*/
+<link-text>    ::= <text>
+<alt-text>     ::= <text>
+<url>          ::= <character>*
+<text>         ::= <character>+
+<text-line>    ::= <text> <newline>
+<plain-text>   ::= <character>+
+<character>    ::= "a"..."z" | "A"..."Z" | <digit> | <symbol> ...
+<digit>        ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<blank-line>   ::= <whitespace>* <newline>
+<newline>      ::= /* a newline character */
+<whitespace>   ::= /* a space or tab character */
+
+/*inline*/
+<inline-element> ::= <link>
+                   | <image>
+                   | <strong>
+                   | <emphasis>
+                   | <strikethrough>
+                   | <inline-code>
+                   | <plain-text>
+
+<link>  ::= "[" <link-text> "]" "(" <url> ")"
+<image> ::= "![" <alt-text> "]" "(" <url> ")"
+<strong>        ::= "**" <text> "**" | "__" <text> "__"
+<emphasis>      ::= "*" <text> "*" | "_" <text> "_"
+<strikethrough> ::= "~~" <text> "~~"
+<inline-code> ::= "`" <text> "`"
+
+/*block*/
+<block> ::= <heading>
+          | <paragraph>
+          | <blockquote>
+          | <list>
+          | <fenced-code-block>
+          | <horizontal-rule>
+          | <blank-line>+
+
+<heading> ::= <hashes> " " <inline-element>+ <newline>
+<hashes>  ::= "#" | "##" | "###" | "####" | "#####" | "######"
+
+<paragraph> ::= <inline-element>+ <newline>
+
+<blockquote> ::= (">" " "? <inline-element>+ <newline>)+
+
+<list>           ::= <unordered-list> | <ordered-list>
+<unordered-list> ::= <ul-item>+
+<ordered-list>   ::= <ol-item>+
+<ul-item>        ::= ("*" | "-" | "+") " " <inline-element>+ <newline>
+<ol-item>        ::= <digit>+ "." " " <inline-element>+ <newline>
+
+<fenced-code-block>   ::= "```" <language>? <newline> <text-line>* "```" <newline>
+<language>            ::= <text>
+
+<horizontal-rule> ::= ("---" | "***" | "___") <newline>
+
+/*all*/
+<document> ::= <block>+
